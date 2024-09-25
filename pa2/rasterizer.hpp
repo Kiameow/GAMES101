@@ -66,6 +66,8 @@ namespace rst
         void set_view(const Eigen::Matrix4f& v);
         void set_projection(const Eigen::Matrix4f& p);
 
+        void set_MSAA_times(int sample_times);
+
         void set_pixel(const Eigen::Vector3f& point, const Eigen::Vector3f& color);
 
         void clear(Buffers buff);
@@ -82,6 +84,8 @@ namespace rst
         // VERTEX SHADER -> MVP -> Clipping -> /.W -> VIEWPORT -> DRAWLINE/DRAWTRI -> FRAGSHADER
 
     private:
+        int MSAA_times = 1;
+
         Eigen::Matrix4f model;
         Eigen::Matrix4f view;
         Eigen::Matrix4f projection;
@@ -92,7 +96,10 @@ namespace rst
 
         std::vector<Eigen::Vector3f> frame_buf;
 
-        std::vector<float> depth_buf;
+        std::vector<float> depth_buf;;
+
+        Eigen::Vector3f calc_color(std::vector<Eigen::Vector3f>& colors);
+        
         int get_index(int x, int y);
 
         int width, height;

@@ -8,6 +8,7 @@
 #include "rasterizer.hpp"
 #include <opencv2/opencv.hpp>
 #include <math.h>
+#include <iostream>
 
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions)
@@ -40,7 +41,7 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 }
 
 
-static bool insideTriangle(int x, int y, const Vector3f* _v)
+static bool insideTriangle(float x, float y, const Vector3f* _v)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
     const auto A = _v[0];
@@ -148,11 +149,18 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
         yMax = yMax < std::ceil(v[i].y()) ? std::ceil(v[i].y()) : yMax;
     }
 
+    std::vector<std::vector<Eigen::Vector3f>> MSAA_frame_buf(
+        width * height, 
+        std::vector<Eigen::Vector3f>(MSAA_times * MSAA_times, Eigen::Vector3f{0, 0, 0})
+    );
+
+    
     for (int x = xMin; x <= xMax; ++x) 
     {
+        bool first_time = true;
         for (int y = yMin; y <= yMax; ++y) 
         {
-            if (insideTriangle(x, y, t.v))
+            if (insideTriangle(x + 0.5f, y + 0.5f, t.v))
             {
                 // get the interpolated z value
                 // need to judge if the z_buffer(depth_buf) is smaller than current pixel
@@ -163,11 +171,31 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
 
-                if (depth_buf[get_index(x, y)] > z_interpolated)
+                if (z_interpolated < depth_buf[get_index(x, y)])
                 {
+                    for (int i = 0; i < MSAA_times * MSAA_times; ++i)
+                    {
+                        float cx = x + 1.0f / MSAA_times * (i % MSAA_times) + 1.0f / MSAA_times / 2;
+                        float cy = y + 1.0f / MSAA_times * (i / MSAA_times) + 1.0f / MSAA_times / 2;
+                        //std::cout << "pos:" << cx << "," << cy << std::endl;
+
+                        if (insideTriangle(cx, cy, t.v))
+                        {
+                            MSAA_frame_buf[get_index(x, y)][i] = t.getColor();
+                        }
+                    }
+                    if (first_time) {
+                        for (int i = 0; i < MSAA_times * MSAA_times; ++i)
+                        {
+                            //std::cout << "MSAA_frame_buf for " << i << ":" << std::endl << MSAA_frame_buf[get_index(x, y)][i] << std::endl;
+                            first_time = false;
+                        }
+                        
+                    }
                     depth_buf[get_index(x, y)] = z_interpolated;
-                    set_pixel(Eigen::Vector3f(x, y, z_interpolated), t.getColor());
+                    frame_buf[get_index(x, y)] = calc_color(MSAA_frame_buf[get_index(x, y)]);
                 }
+                set_pixel(Eigen::Vector3f(x, y, z_interpolated), frame_buf[get_index(x, y)]);
             }
         }
     }
@@ -179,6 +207,11 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     //z_interpolated *= w_reciprocal;
 
     // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
+}
+
+void rst::rasterizer::set_MSAA_times(int times)
+{
+    MSAA_times = times;
 }
 
 void rst::rasterizer::set_model(const Eigen::Matrix4f& m)
@@ -212,6 +245,19 @@ rst::rasterizer::rasterizer(int w, int h) : width(w), height(h)
 {
     frame_buf.resize(w * h);
     depth_buf.resize(w * h);
+}
+
+Eigen::Vector3f rst::rasterizer::calc_color(std::vector<Eigen::Vector3f>& colors)
+{
+    Eigen::Vector3f color = Eigen::Vector3f{0, 0, 0};
+    for (auto& col : colors)
+    {
+        color.x() += col.x();
+        color.y() += col.y();
+        color.z() += col.z();
+    }
+    color /= colors.size();
+    return color;
 }
 
 int rst::rasterizer::get_index(int x, int y)

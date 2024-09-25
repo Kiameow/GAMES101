@@ -104,9 +104,11 @@ int main(int argc, const char** argv)
 
     int key = 0;
     int frame_count = 0;
+    int MSAA_times = 2;
 
     if (command_line)
     {
+        r.set_MSAA_times(MSAA_times);
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
         r.set_model(get_model_matrix(angle));
@@ -125,6 +127,7 @@ int main(int argc, const char** argv)
 
     while(key != 27)
     {
+        r.set_MSAA_times(MSAA_times);
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
         r.set_model(get_model_matrix(angle));
@@ -138,6 +141,15 @@ int main(int argc, const char** argv)
         cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
         cv::imshow("image", image);
         key = cv::waitKey(10);
+
+        if (key == 'a') {
+            std::cout << "MSAA set to " << MSAA_times << '\n';
+            MSAA_times = std::max(MSAA_times - 1, 1);
+        }
+        else if (key == 'd') {
+            std::cout << "MSAA set to " << MSAA_times << '\n';
+            MSAA_times++;
+        }
 
         std::cout << "frame count: " << frame_count++ << '\n';
     }
