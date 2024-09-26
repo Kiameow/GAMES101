@@ -177,20 +177,11 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                     {
                         float cx = x + 1.0f / MSAA_times * (i % MSAA_times) + 1.0f / MSAA_times / 2;
                         float cy = y + 1.0f / MSAA_times * (i / MSAA_times) + 1.0f / MSAA_times / 2;
-                        //std::cout << "pos:" << cx << "," << cy << std::endl;
 
                         if (insideTriangle(cx, cy, t.v))
                         {
                             MSAA_frame_buf[get_index(x, y)][i] = t.getColor();
                         }
-                    }
-                    if (first_time) {
-                        for (int i = 0; i < MSAA_times * MSAA_times; ++i)
-                        {
-                            //std::cout << "MSAA_frame_buf for " << i << ":" << std::endl << MSAA_frame_buf[get_index(x, y)][i] << std::endl;
-                            first_time = false;
-                        }
-                        
                     }
                     depth_buf[get_index(x, y)] = z_interpolated;
                     frame_buf[get_index(x, y)] = calc_color(MSAA_frame_buf[get_index(x, y)]);
