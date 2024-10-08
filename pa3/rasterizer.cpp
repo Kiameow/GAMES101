@@ -274,16 +274,9 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
         yMin = yMin > std::floor(v[i].y()) ? std::floor(v[i].y()) : yMin;
         yMax = yMax < std::ceil(v[i].y()) ? std::ceil(v[i].y()) : yMax;
     }
-
-    std::vector<std::vector<Eigen::Vector3f>> MSAA_frame_buf(
-        width * height, 
-        std::vector<Eigen::Vector3f>(MSAA_times * MSAA_times, Eigen::Vector3f{0, 0, 0})
-    );
-
     
     for (int x = xMin; x <= xMax; ++x) 
     {
-        bool first_time = true;
         for (int y = yMin; y <= yMax; ++y) 
         {
             if (insideTriangle(x + 0.5f, y + 0.5f, t.v))
@@ -295,20 +288,23 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
 
                 if (z_interpolated < depth_buf[get_index(x, y)])
                 {
-                    for (int i = 0; i < MSAA_times * MSAA_times; ++i)
-                    {
-                        float cx = x + 1.0f / MSAA_times * (i % MSAA_times) + 1.0f / MSAA_times / 2;
-                        float cy = y + 1.0f / MSAA_times * (i / MSAA_times) + 1.0f / MSAA_times / 2;
-
-                        if (insideTriangle(cx, cy, t.v))
-                        {
-                            MSAA_frame_buf[get_index(x, y)][i] = t.getColor();
-                        }
-                    }
                     depth_buf[get_index(x, y)] = z_interpolated;
-                    frame_buf[get_index(x, y)] = calc_color(MSAA_frame_buf[get_index(x, y)]);
+                    auto interpolated_color = interpolate(alpha, beta, gamma, t.color[0], t.color[1], t.color[2], w_reciprocal);
+                    // std::cout << "Interpolated color: " << interpolated_color.transpose() << std::endl;
+                    auto interpolated_normal = interpolate(alpha, beta, gamma, t.normal[0], t.normal[1], t.normal[2], w_reciprocal).normalized();
+                    auto interpolated_texcoords = interpolate(alpha, beta, gamma, t.tex_coords[0], t.tex_coords[1], t.tex_coords[2], w_reciprocal);
+                    auto interpolated_shadingcoords = interpolate(alpha, beta, gamma, view_pos[0], view_pos[1], view_pos[2], w_reciprocal);
+                    // is the shading coords same as the xyz position?
+
+                    fragment_shader_payload payload( interpolated_color, interpolated_normal.normalized(), interpolated_texcoords, texture ? &*texture : nullptr);
+
+                    payload.view_pos = interpolated_shadingcoords;
+
+                    auto pixel_color = fragment_shader(payload);
+                    
+                    frame_buf[get_index(x, y)] = pixel_color;
                 }
-                set_pixel(Eigen::Vector3f(x, y, z_interpolated), frame_buf[get_index(x, y)]);
+                set_pixel(Eigen::Vector2i(x, y), frame_buf[get_index(x, y)]);
             }
         }
     }
@@ -323,10 +319,10 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
     // curious, really? 
 
     // TODO: Interpolate the attributes:
-    // auto interpolated_color
-    // auto interpolated_normal
-    // auto interpolated_texcoords
-    // auto interpolated_shadingcoords
+    //    * interpolated_color
+    //    * interpolated_normal
+    //    * interpolated_texcoords
+    //    * interpolated_shadingcoords
 
     // Use: fragment_shader_payload payload( interpolated_color, interpolated_normal.normalized(), interpolated_texcoords, texture ? &*texture : nullptr);
     // Use: payload.view_pos = interpolated_shadingcoords;

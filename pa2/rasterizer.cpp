@@ -157,7 +157,6 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     
     for (int x = xMin; x <= xMax; ++x) 
     {
-        bool first_time = true;
         for (int y = yMin; y <= yMax; ++y) 
         {
             if (insideTriangle(x + 0.5f, y + 0.5f, t.v))
