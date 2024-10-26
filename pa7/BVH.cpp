@@ -107,8 +107,47 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
 
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
-    // TODO Traverse the BVH to find intersection
+    // FINISHED Traverse the BVH to find intersection
+    Intersection isect;
+    const auto invDir = Vector3f(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
+    const auto dirIsNeg = std::array<int, 3>{int(invDir.x < 0), int(invDir.y < 0), int(invDir.z < 0)};
+    
+    if (node->bounds.IntersectP(ray, invDir, dirIsNeg)) {
+        BVHBuildNode* selected_node = nullptr;
+        if (node->left != nullptr || node->right != nullptr) {
+            Intersection leftIsect, rightIsect;
+            
+            if (node->left != nullptr) {
+                leftIsect = getIntersection(node->left, ray);
+            }
+            
+            if (node->right != nullptr) {
+                rightIsect = getIntersection(node->right, ray);
+            }
+            
+            // 比较左右子树的交点，返回较近的那个
+            if (leftIsect.happened && rightIsect.happened) {
+                selected_node = (leftIsect.distance < rightIsect.distance) ? node->left : node->right;
+            }
+            else if (leftIsect.happened) {
+                selected_node = node->left;
+            }
+            else if (rightIsect.happened) {
+                selected_node = node->right;
+            }
+            
+            if (selected_node != nullptr) {
+                return getIntersection(selected_node, ray);
+            }
+            return isect;
+        }
+        // if node is a leaf node, check if ray intersects with any primitive in the leaf node 
+        else if (node->object != nullptr) {
+            return node->object->getIntersection(ray);
+        }
+    }
 
+    return isect;
 }
 
 

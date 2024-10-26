@@ -171,7 +171,7 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
 
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
-    // DOING Traverse the BVH to find intersection
+    // FINISHED Traverse the BVH to find intersection
     // directly returning the isect means no intersection happened
     Intersection isect;
     const auto invDir = Vector3f(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
