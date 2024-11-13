@@ -38,9 +38,9 @@ int main(int argc, char** argv)
     scene.Add(&left);
     scene.Add(&right);
     scene.Add(&light_);
-
+    std::cout << "Scene created\n";
     scene.buildBVH();
-
+    std::cout << "BVH built\n";
     Renderer r;
 
     auto start = std::chrono::system_clock::now();
@@ -51,6 +51,7 @@ int main(int argc, char** argv)
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::hours>(stop - start).count() << " hours\n";
     std::cout << "          : " << std::chrono::duration_cast<std::chrono::minutes>(stop - start).count() << " minutes\n";
     std::cout << "          : " << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << " seconds\n";
+    std::cout << "  ";
 
     return 0;
 }
