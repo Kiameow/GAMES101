@@ -169,48 +169,88 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
     return isect;
 }
 
+// previous wrong method!!!
+// Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
+// {
+//     // FINISHED Traverse the BVH to find intersection
+//     // directly returning the isect means no intersection happened
+//     Intersection isect;
+//     const auto invDir = Vector3f(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
+//     const auto dirIsNeg = std::array<int, 3>{int(invDir.x < 0), int(invDir.y < 0), int(invDir.z < 0)};
+    
+//     if (node->bounds.IntersectP(ray, invDir, dirIsNeg)) {
+//         BVHBuildNode* selected_node = nullptr;
+//         if (node->left != nullptr || node->right != nullptr) {
+//             Intersection leftIsect, rightIsect;
+            
+//             if (node->left != nullptr) {
+//                 leftIsect = getIntersection(node->left, ray);
+//             }
+            
+//             if (node->right != nullptr) {
+//                 rightIsect = getIntersection(node->right, ray);
+//             }
+            
+//             // 比较左右子树的交点，返回较近的那个
+//             if (leftIsect.happened && rightIsect.happened) {
+//                 selected_node = (leftIsect.distance < rightIsect.distance) ? node->left : node->right;
+//             }
+//             else if (leftIsect.happened) {
+//                 selected_node = node->left;
+//             }
+//             else if (rightIsect.happened) {
+//                 selected_node = node->right;
+//             }
+            
+//             if (selected_node != nullptr) {
+//                 return getIntersection(selected_node, ray);
+//             }
+//             return isect;
+//         }
+//         // if node is a leaf node, check if ray intersects with any primitive in the leaf node 
+//         else if (node->object != nullptr) {
+//             return node->object->getIntersection(ray);
+//         }
+//     }
+
+//     return isect;
+// }
+
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
-    // FINISHED Traverse the BVH to find intersection
-    // directly returning the isect means no intersection happened
-    Intersection isect;
+    Intersection insect;
     const auto invDir = Vector3f(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
     const auto dirIsNeg = std::array<int, 3>{int(invDir.x < 0), int(invDir.y < 0), int(invDir.z < 0)};
-    
-    if (node->bounds.IntersectP(ray, invDir, dirIsNeg)) {
-        BVHBuildNode* selected_node = nullptr;
-        if (node->left != nullptr || node->right != nullptr) {
-            Intersection leftIsect, rightIsect;
-            
-            if (node->left != nullptr) {
-                leftIsect = getIntersection(node->left, ray);
-            }
-            
-            if (node->right != nullptr) {
-                rightIsect = getIntersection(node->right, ray);
-            }
-            
-            // 比较左右子树的交点，返回较近的那个
-            if (leftIsect.happened && rightIsect.happened) {
-                selected_node = (leftIsect.distance < rightIsect.distance) ? node->left : node->right;
-            }
-            else if (leftIsect.happened) {
-                selected_node = node->left;
-            }
-            else if (rightIsect.happened) {
-                selected_node = node->right;
-            }
-            
-            if (selected_node != nullptr) {
-                return getIntersection(selected_node, ray);
-            }
-            return isect;
-        }
-        // if node is a leaf node, check if ray intersects with any primitive in the leaf node 
-        else if (node->object != nullptr) {
-            return node->object->getIntersection(ray);
-        }
+
+    // if ray is not intersected with bounds, return original intersection
+    if (!node->bounds.IntersectP(ray, invDir, dirIsNeg)) {
+        return insect;
     }
 
-    return isect;
+    // if ray hits the leaf node, then try to intersect with all objects in this node, given the leaf node here only contain one object, we don't need to do iteration. Just update the intersection and return 
+    if (node->object != nullptr) {
+        return node->object->getIntersection(ray);
+    }
+
+    // if node is branch node, do recursion until it reaches leaf node
+    Intersection leftInsect, rightInsect;
+    if (node->left != nullptr) {
+        leftInsect = getIntersection(node->left, ray);
+    }
+
+    if (node->right != nullptr) {
+        rightInsect = getIntersection(node->right, ray);
+    }
+
+    // compare which intersection is closer and return the close one
+    if (leftInsect.happened && rightInsect.happened) {
+        return leftInsect.distance < rightInsect.distance ? leftInsect : rightInsect;
+    } else if (leftInsect.happened) {
+        return leftInsect;
+    } else if (rightInsect.happened) {
+        return rightInsect;
+    }
+
+    // if ray hits no object, return the original one
+    return insect;
 }

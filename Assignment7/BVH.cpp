@@ -107,41 +107,8 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
 
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
-    Intersection insect;
-    const auto invDir = Vector3f(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
-    const auto dirIsNeg = std::array<int, 3>{int(invDir.x < 0), int(invDir.y < 0), int(invDir.z < 0)};
+    // TODO Traverse the BVH to find intersection
 
-    // if ray is not intersected with bounds, return original intersection
-    if (!node->bounds.IntersectP(ray, invDir, dirIsNeg)) {
-        return insect;
-    }
-
-    // if ray hits the leaf node, then try to intersect with all objects in this node, given the leaf node here only contain one object, we don't need to do iteration. Just update the intersection and return 
-    if (node->object != nullptr) {
-        return node->object->getIntersection(ray);
-    }
-
-    // if node is branch node, do recursion until it reaches leaf node
-    Intersection leftInsect, rightInsect;
-    if (node->left != nullptr) {
-        leftInsect = getIntersection(node->left, ray);
-    }
-
-    if (node->right != nullptr) {
-        rightInsect = getIntersection(node->right, ray);
-    }
-
-    // compare which intersection is closer and return the close one
-    if (leftInsect.happened && rightInsect.happened) {
-        return leftInsect.distance < rightInsect.distance ? leftInsect : rightInsect;
-    } else if (leftInsect.happened) {
-        return leftInsect;
-    } else if (rightInsect.happened) {
-        return rightInsect;
-    }
-
-    // if ray hits no object, return the original one
-    return insect;
 }
 
 
