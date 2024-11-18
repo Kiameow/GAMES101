@@ -3,12 +3,12 @@ the resource give us two method to implement the position of the masses:
 1. Explicit Euler method (take the last frame velocity)
 2. Semi-implicit Euler method (take the current frame velocity)
 
-but after apply both methods, I find that the Explicit Euler method could lead to a bug (the masses' velocity will be scaled up continuously) while the Semi-implicit Euler method could make the simulation a stable system.
+but after apply both methods, I find that the Explicit Euler method is unstable (the masses' velocity suddenly increase after a state of closing to stillness, and become faster and faster) while the Semi-implicit Euler method could make the simulation a stable system.
 
 | Explicit Euler | Semi-implicit Euler |
 | --- | --- |
 | velocity scale up | stable |
-|![explicit-0](./Assignment8/images/explicit-0.png) ![explicit-1](./Assignment8/images/explicit-1.png)|![semi-implicit](./Assignment8/images/semi-implicit.png)|
+|![unstable-0](./images/unstable-0.png) ![unstable-1](./images/unstable-1.png) ![unstable-2](./images/unstable-2.png)|![stable-0](./images/stable-0.png) ![stable-1](./images/stable-1.png)|
 
 
 

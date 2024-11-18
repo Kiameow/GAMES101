@@ -21,6 +21,10 @@ public:
 
   vector<Mass *> masses;
   vector<Spring *> springs;
+
+private:
+  float friction_coefficient = 0.01f;
+  float damping_factor = 0.0005f;
 }; // struct Rope
 }
 #endif /* ROPE_H */
