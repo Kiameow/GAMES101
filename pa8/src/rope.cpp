@@ -38,8 +38,8 @@ namespace CGL {
             auto distanceB2A = vectorB2A.norm();
             auto dirB2A = vectorB2A / distanceB2A;
             auto forceB2A = - s->k * dirB2A * (distanceB2A - s->rest_length);
-            //std::cout << "Force on node B: " << forceB2A << std::endl;
             s->m2->forces += forceB2A;
+
             // calculate the force which give to a
             auto vectorA2B = s->m1->position - s->m2->position;
             auto distanceA2B = vectorA2B.norm();
@@ -76,6 +76,19 @@ namespace CGL {
         for (auto &s : springs)
         {
             // TODO (Part 3): Simulate one timestep of the rope using explicit Verlet （solving constraints)
+            // calculate the force which give to b
+            auto vectorB2A = s->m2->position - s->m1->position;
+            auto distanceB2A = vectorB2A.norm();
+            auto dirB2A = vectorB2A / distanceB2A;
+            auto forceB2A = - s->k * dirB2A * (distanceB2A - s->rest_length);
+            s->m2->forces += forceB2A;
+            
+            // calculate the force which give to a
+            auto vectorA2B = s->m1->position - s->m2->position;
+            auto distanceA2B = vectorA2B.norm();
+            auto dirA2B = vectorA2B / distanceA2B;
+            auto forceA2B = - s->k * dirA2B * (distanceA2B - s->rest_length);
+            s->m1->forces += forceA2B;
         }
 
         for (auto &m : masses)
@@ -84,6 +97,11 @@ namespace CGL {
             {
                 Vector2D temp_position = m->position;
                 // TODO (Part 3.1): Set the new position of the rope mass
+                auto forces = m->forces + gravity;
+                auto acc = forces / m->mass;
+                m->position = m->position + m->position - m->last_position + acc * acc * delta_t;
+
+                m->last_position = temp_position;
                 
                 // TODO (Part 4): Add global Verlet damping
             }
