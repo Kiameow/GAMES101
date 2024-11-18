@@ -10,6 +10,6 @@ but after applying both methods, I find that the Explicit Euler method is unstab
 | velocity scale up | stable |
 |![unstable-0](./images/unstable-0.png) ![unstable-1](./images/unstable-1.png) ![unstable-2](./images/unstable-2.png)|![stable-0](./images/stable-0.png) ![stable-1](./images/stable-1.png)|
 
-
+and in low steps per frame, the explicit Euler method becomes much more unstable while the semi-implicit Euler method still performs well.
 
 
